@@ -1,3 +1,63 @@
 <resources>
-    <string name="app_name">GuidelineApp</string>
+    <string name="app_name">Skyline</string>
+    <!-- Home -->
+    <string name="current_location">Current location</string>
+    <string name="updated_at">Updated %1$s</string>
+    <string name="refresh_weather">Refresh weather</string>
+    <string name="todays_details">Today\'s details</string>
+    <string name="seven_day_forecast">7-day forecast</string>
+    <string name="forecast_hint">Tap a day for details</string>
+    <string name="powered_by">Weather data by Open-Meteo</string>
+
+    <!-- Detail -->
+    <string name="back">Back</string>
+    <string name="hourly_forecast">Hourly forecast</string>
+    <string name="day_details">Details</string>
+    <string name="temperature_range">Temperature range</string>
+
+    <!-- Metrics -->
+    <string name="feels_like">Feels like</string>
+    <string name="humidity">Humidity</string>
+    <string name="wind">Wind</string>
+    <string name="uv_index">UV index</string>
+    <string name="pressure">Pressure</string>
+    <string name="visibility">Visibility</string>
+    <string name="rain_chance">Rain chance</string>
+    <string name="precipitation">Precipitation</string>
+    <string name="sunrise">Sunrise</string>
+    <string name="sunset">Sunset</string>
+
+    <!-- Formats -->
+    <string name="temperature_format">%1$d°</string>
+    <string name="high_low_format">H:%1$d°   L:%2$d°</string>
+    <string name="high_low_plain_format">%1$d° / %2$d°</string>
+    <string name="humidity_format">%1$d%%</string>
+    <string name="wind_format">%1$d km/h %2$s</string>
+    <string name="wind_plain_format">%1$d km/h</string>
+    <string name="pressure_format">%1$d hPa</string>
+    <string name="visibility_format">%1$s km</string>
+    <string name="precipitation_format">%1$s mm</string>
+    <string name="percent_format">%1$d%%</string>
+    <string name="sunrise_sunset_format">%1$s · %2$s</string>
+
+    <!-- Loading -->
+    <string name="loading_weather">Fetching the latest forecast</string>
+
+    <!-- Errors -->
+    <string name="try_again">Try again</string>
+    <string name="error_location_title">Location not available</string>
+    <string name="error_location_message">We couldn\'t find your current location. Make sure location services are turned on, then try again.</string>
+    <string name="error_network_title">Couldn\'t load the forecast</string>
+    <string name="error_network_message">The weather service didn\'t respond. Check your internet connection and try again.</string>
+
+    <!-- Conditions -->
+    <string name="condition_sunny">Sunny</string>
+    <string name="condition_clear">Clear</string>
+    <string name="condition_partly_cloudy">Partly cloudy</string>
+    <string name="condition_cloudy">Cloudy</string>
+    <string name="condition_foggy">Foggy</string>
+    <string name="condition_drizzle">Light drizzle</string>
+    <string name="condition_rain">Rain</string>
+    <string name="condition_snow">Snow</string>
+    <string name="condition_thunderstorm">Thunderstorm</string>
 </resources>
