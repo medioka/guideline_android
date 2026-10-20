@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -18,8 +19,17 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,6 +46,7 @@ import com.medioka.guideline.app.presentation.common.extension.formatDecimal
 import com.medioka.guideline.app.presentation.common.location.LocationResult
 import com.medioka.guideline.app.presentation.common.model.CurrentWeather
 import com.medioka.guideline.app.presentation.common.model.DailyForecast
+import com.medioka.guideline.app.presentation.common.model.WeatherErrorReason
 import com.medioka.guideline.app.presentation.common.model.WeatherUiState
 import com.medioka.guideline.app.presentation.common.previews.WeatherSampleData
 import com.medioka.guideline.app.presentation.home.components.CurrentWeatherHero
@@ -58,6 +69,7 @@ data class HomeCallbacks(
     val onLocationResult: (LocationResult) -> Unit = {},
     val onDismissError: () -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    val isRefreshing: Boolean = false,
 )
 
 /**
@@ -69,7 +81,7 @@ data class HomeCallbacks(
  */
 @Composable
 fun HomeScreen(
-    onDaySelected: (DailyForecast, String) -> Unit,
+    onNavigateToWeatherDay: (DailyForecast, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // TODO: replace with the ViewModel StateFlow.
@@ -89,7 +101,7 @@ fun HomeScreen(
     HomeContent(
         state = state,
         callbacks = callbacks,
-        onDayClick = { forecast -> onDaySelected(forecast, locationName) },
+        onDayClick = { forecast -> onNavigateToWeatherDay(forecast, locationName) },
         modifier = modifier,
     )
 }
@@ -104,36 +116,69 @@ private fun HomeContent(
     onDayClick: (DailyForecast) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedContent(
-        targetState = state,
-        modifier = modifier.fillMaxSize(),
-        transitionSpec = {
-            fadeIn(animationSpec = tween(420)) togetherWith fadeOut(animationSpec = tween(200))
-        },
-        contentKey = { it::class },
-        label = "weather-state",
-    ) { uiState ->
-        when (uiState) {
-            WeatherUiState.Loading -> HomeLoadingContent()
-            is WeatherUiState.Error -> HomeErrorContent(
-                error = uiState,
-                onRetry = callbacks.onRetry,
-            )
+    var lastSuccess by remember { mutableStateOf<WeatherUiState.Success?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-            is WeatherUiState.Success -> HomeSuccessContent(
-                current = uiState.current,
-                forecast = uiState.forecast,
-                onRefresh = callbacks.onRefresh,
-                onDayClick = onDayClick,
-            )
+    LaunchedEffect(state) {
+        if (state is WeatherUiState.Success) lastSuccess = state
+    }
+
+    val refreshError = (state as? WeatherUiState.Error).takeIf { lastSuccess != null }
+    val refreshErrorMessage = when (refreshError?.reason) {
+        WeatherErrorReason.LOCATION -> stringResource(R.string.refresh_error_location)
+        WeatherErrorReason.NETWORK -> stringResource(R.string.refresh_error_network)
+        null -> null
+    }
+    LaunchedEffect(refreshErrorMessage) {
+        refreshErrorMessage?.let { snackbarHostState.showSnackbar(it) }
+    }
+
+    val keepCachedContent = lastSuccess != null &&
+        (refreshError != null || (state is WeatherUiState.Loading && callbacks.isRefreshing))
+    val displayedState = if (keepCachedContent) lastSuccess!! else state
+
+    Box(modifier = modifier.fillMaxSize()) {
+        AnimatedContent(
+            targetState = displayedState,
+            modifier = Modifier.fillMaxSize(),
+            transitionSpec = {
+                fadeIn(animationSpec = tween(420)) togetherWith fadeOut(animationSpec = tween(200))
+            },
+            contentKey = { it::class },
+            label = "weather-state",
+        ) { uiState ->
+            when (uiState) {
+                WeatherUiState.Loading -> HomeLoadingContent()
+                is WeatherUiState.Error -> HomeErrorContent(
+                    error = uiState,
+                    onRetry = callbacks.onRetry,
+                )
+
+                is WeatherUiState.Success -> HomeSuccessContent(
+                    current = uiState.current,
+                    forecast = uiState.forecast,
+                    isRefreshing = callbacks.isRefreshing && refreshError == null,
+                    onRefresh = callbacks.onRefresh,
+                    onDayClick = onDayClick,
+                )
+            }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding(),
+        )
     }
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun HomeSuccessContent(
     current: CurrentWeather,
     forecast: List<DailyForecast>,
+    isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onDayClick: (DailyForecast) -> Unit,
 ) {
@@ -173,48 +218,54 @@ private fun HomeSuccessContent(
     )
 
     WeatherBackground(backdrop = backdrop) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .statusBarsPadding()
-                .navigationBarsPadding(),
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize(),
         ) {
-            LocationBar(current = current, onRefresh = onRefresh)
-
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Spacer(modifier = Modifier.height(20.dp))
-                CurrentWeatherHero(current = current)
-                Spacer(modifier = Modifier.height(30.dp))
-                SectionHeader(title = stringResource(R.string.todays_details))
-                Spacer(modifier = Modifier.height(12.dp))
-                WeatherDetailsGrid(details = details)
-                Spacer(modifier = Modifier.height(30.dp))
-                SectionHeader(
-                    title = stringResource(R.string.seven_day_forecast),
-                    supportingText = stringResource(R.string.forecast_hint),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .statusBarsPadding()
+                    .navigationBarsPadding(),
             ) {
-                itemsIndexed(
-                    items = forecast,
-                    key = { _, day -> "${day.dateLabel}-${day.dayLabel}" },
-                ) { index, day ->
-                    ForecastCard(
-                        day = day,
-                        highlighted = index == 0,
-                        onClick = { onDayClick(day) },
+                LocationBar(current = current)
+
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    CurrentWeatherHero(current = current)
+                    Spacer(modifier = Modifier.height(30.dp))
+                    SectionHeader(title = stringResource(R.string.todays_details))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    WeatherDetailsGrid(details = details)
+                    Spacer(modifier = Modifier.height(30.dp))
+                    SectionHeader(
+                        title = stringResource(R.string.seven_day_forecast),
+                        supportingText = stringResource(R.string.forecast_hint),
                     )
                 }
-            }
 
-            ScreenFooter(text = stringResource(R.string.powered_by))
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    itemsIndexed(
+                        items = forecast,
+                        key = { _, day -> "${day.dateLabel}-${day.dayLabel}" },
+                    ) { index, day ->
+                        ForecastCard(
+                            day = day,
+                            highlighted = index == 0,
+                            onClick = { onDayClick(day) },
+                        )
+                    }
+                }
+
+                ScreenFooter(text = stringResource(R.string.powered_by))
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }

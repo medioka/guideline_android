@@ -49,6 +49,8 @@
     <string name="error_location_message">We couldn\'t find your current location. Make sure location services are turned on, then try again.</string>
     <string name="error_network_title">Couldn\'t load the forecast</string>
     <string name="error_network_message">The weather service didn\'t respond. Check your internet connection and try again.</string>
+    <string name="refresh_error_location">Couldn\'t update your location. Showing the last available forecast.</string>
+    <string name="refresh_error_network">Couldn\'t refresh weather. Showing the last available forecast.</string>
 
     <!-- Conditions -->
     <string name="condition_sunny">Sunny</string>

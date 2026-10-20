@@ -1,9 +1,12 @@
 package com.medioka.guideline.app.presentation.common.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Minimal, UI-facing representation of the Open-Meteo weather codes.
  * The data layer is responsible for mapping WMO codes into these values.
  */
+@Serializable
 enum class WeatherCondition {
     CLEAR,
     PARTLY_CLOUDY,
@@ -35,6 +38,7 @@ data class CurrentWeather(
     val sunsetLabel: String,
 )
 
+@Serializable
 data class HourlyForecast(
     val timeLabel: String,
     val condition: WeatherCondition,
@@ -43,6 +47,7 @@ data class HourlyForecast(
     val isDay: Boolean = true,
 )
 
+@Serializable
 data class DailyForecast(
     val dayLabel: String,
     val dateLabel: String,
