@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation.components
+package com.medioka.guideline.app.presentation.common.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,12 +35,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medioka.guideline.app.R
 import com.medioka.guideline.app.presentation.ErrorBackdrop
-import com.medioka.guideline.app.presentation.model.WeatherErrorReason
-import com.medioka.guideline.app.presentation.model.WeatherUiState
+import com.medioka.guideline.app.presentation.common.model.WeatherErrorReason
+import com.medioka.guideline.app.presentation.common.model.WeatherUiState
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable
-fun WeatherErrorContent(
+fun HomeErrorContent(
     error: WeatherUiState.Error,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -130,9 +130,9 @@ fun WeatherErrorContent(
 
 @Preview(name = "Location error", showBackground = true, widthDp = 412, heightDp = 915)
 @Composable
-private fun WeatherLocationErrorPreview() {
+private fun HomeLocationErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        WeatherErrorContent(
+        HomeErrorContent(
             error = WeatherUiState.Error(WeatherErrorReason.LOCATION),
             onRetry = {},
         )
@@ -141,9 +141,9 @@ private fun WeatherLocationErrorPreview() {
 
 @Preview(name = "Network error", showBackground = true, widthDp = 412, heightDp = 915)
 @Composable
-private fun WeatherNetworkErrorPreview() {
+private fun HomeNetworkErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        WeatherErrorContent(
+        HomeErrorContent(
             error = WeatherUiState.Error(WeatherErrorReason.NETWORK),
             onRetry = {},
         )

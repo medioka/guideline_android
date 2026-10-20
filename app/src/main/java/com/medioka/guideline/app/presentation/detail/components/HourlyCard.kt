@@ -24,10 +24,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medioka.guideline.app.R
-import com.medioka.guideline.app.presentation.WeatherSampleData
-import com.medioka.guideline.app.presentation.components.RainDrop
-import com.medioka.guideline.app.presentation.components.WeatherGlyph
-import com.medioka.guideline.app.presentation.model.HourlyForecast
+import com.medioka.guideline.app.presentation.common.previews.WeatherSampleData
+import com.medioka.guideline.app.presentation.common.components.RainDrop
+import com.medioka.guideline.app.presentation.common.components.WeatherGlyph
+import com.medioka.guideline.app.presentation.common.model.HourlyForecast
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable

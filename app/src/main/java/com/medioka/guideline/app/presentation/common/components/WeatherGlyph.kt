@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation.components
+package com.medioka.guideline.app.presentation.common.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.medioka.guideline.app.presentation.model.WeatherCondition
+import com.medioka.guideline.app.presentation.common.model.WeatherCondition
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 import kotlin.math.cos
 import kotlin.math.sin

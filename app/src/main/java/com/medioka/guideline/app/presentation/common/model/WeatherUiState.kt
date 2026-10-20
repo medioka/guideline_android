@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation.model
+package com.medioka.guideline.app.presentation.common.model
 
 sealed interface WeatherUiState {
     data object Loading : WeatherUiState

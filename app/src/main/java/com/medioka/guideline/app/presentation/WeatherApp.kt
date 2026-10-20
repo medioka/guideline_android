@@ -10,40 +10,29 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.medioka.guideline.app.presentation.model.DailyForecast
-import com.medioka.guideline.app.presentation.model.WeatherUiState
+import com.medioka.guideline.app.presentation.common.model.DailyForecast
+import com.medioka.guideline.app.presentation.detail.DetailScreen
+import com.medioka.guideline.app.presentation.home.HomeScreen
 
 /**
- * UI-only entry point. Navigation is kept local to this composable until a
- * navigation graph / ViewModel is introduced.
+ * Navigation host for Home and Detail.
+ *
+ * HomeScreen owns its state and callbacks. This composable only keeps the local
+ * navigation state for now.
  */
 @Composable
-fun WeatherApp(
-    state: WeatherUiState,
-    modifier: Modifier = Modifier,
-    onRefresh: () -> Unit = {},
-    onRetry: () -> Unit = {},
-    onDaySelected: (DailyForecast) -> Unit = {},
-) {
+fun WeatherApp(modifier: Modifier = Modifier) {
     var selectedDay by remember { mutableStateOf<DailyForecast?>(null) }
-
-    LaunchedEffect(state) {
-        if (state !is WeatherUiState.Success) {
-            selectedDay = null
-        }
-    }
+    var locationName by remember { mutableStateOf("") }
 
     BackHandler(enabled = selectedDay != null) {
         selectedDay = null
     }
-
-    val locationName = (state as? WeatherUiState.Success)?.current?.locationName.orEmpty()
 
     AnimatedContent(
         targetState = selectedDay,
@@ -72,12 +61,9 @@ fun WeatherApp(
     ) { day ->
         if (day == null) {
             HomeScreen(
-                state = state,
-                onRefresh = onRefresh,
-                onRetry = onRetry,
-                onDayClick = { forecast ->
+                onDaySelected = { forecast, location ->
                     selectedDay = forecast
-                    onDaySelected(forecast)
+                    locationName = location
                 },
             )
         } else {

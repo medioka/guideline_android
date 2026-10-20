@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.medioka.guideline.app.R
-import com.medioka.guideline.app.presentation.model.WeatherCondition
+import com.medioka.guideline.app.presentation.common.model.WeatherCondition
 
 /**
  * Colors used for the full-screen weather backdrop. The actual content always

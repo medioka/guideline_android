@@ -31,8 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medioka.guideline.app.R
-import com.medioka.guideline.app.presentation.WeatherSampleData
-import com.medioka.guideline.app.presentation.model.CurrentWeather
+import com.medioka.guideline.app.presentation.common.previews.WeatherSampleData
+import com.medioka.guideline.app.presentation.common.model.CurrentWeather
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable

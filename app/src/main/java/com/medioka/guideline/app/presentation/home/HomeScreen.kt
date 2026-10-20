@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation
+package com.medioka.guideline.app.presentation.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -18,33 +18,89 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medioka.guideline.app.R
-import com.medioka.guideline.app.presentation.components.ScreenFooter
-import com.medioka.guideline.app.presentation.components.SectionHeader
-import com.medioka.guideline.app.presentation.components.WeatherBackground
-import com.medioka.guideline.app.presentation.components.WeatherDetail
-import com.medioka.guideline.app.presentation.components.WeatherDetailsGrid
-import com.medioka.guideline.app.presentation.components.WeatherErrorContent
-import com.medioka.guideline.app.presentation.components.WeatherLoadingContent
+import com.medioka.guideline.app.presentation.common.components.HomeErrorContent
+import com.medioka.guideline.app.presentation.common.components.HomeLoadingContent
+import com.medioka.guideline.app.presentation.common.components.ScreenFooter
+import com.medioka.guideline.app.presentation.common.components.SectionHeader
+import com.medioka.guideline.app.presentation.common.components.WeatherBackground
+import com.medioka.guideline.app.presentation.common.components.WeatherDetail
+import com.medioka.guideline.app.presentation.common.components.WeatherDetailsGrid
+import com.medioka.guideline.app.presentation.common.extension.formatDecimal
+import com.medioka.guideline.app.presentation.common.location.LocationResult
+import com.medioka.guideline.app.presentation.common.model.CurrentWeather
+import com.medioka.guideline.app.presentation.common.model.DailyForecast
+import com.medioka.guideline.app.presentation.common.model.WeatherUiState
+import com.medioka.guideline.app.presentation.common.previews.WeatherSampleData
 import com.medioka.guideline.app.presentation.home.components.CurrentWeatherHero
 import com.medioka.guideline.app.presentation.home.components.ForecastCard
 import com.medioka.guideline.app.presentation.home.components.LocationBar
-import com.medioka.guideline.app.presentation.model.CurrentWeather
-import com.medioka.guideline.app.presentation.model.DailyForecast
-import com.medioka.guideline.app.presentation.model.WeatherUiState
+import com.medioka.guideline.app.presentation.weatherBackdrop
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
+/**
+ * UI callbacks consumed by the Home screen.
+ *
+ * Android permission and location APIs stay outside this contract. The caller
+ * translates their outcome into [LocationResult] and calls [onLocationResult].
+ */
+data class HomeCallbacks(
+    val onScreenStarted: () -> Unit = {},
+    val onGetLocation: () -> Unit = {},
+    val onRefresh: () -> Unit = {},
+    val onRetry: () -> Unit = {},
+    val onLocationResult: (LocationResult) -> Unit = {},
+    val onDismissError: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
+)
+
+/**
+ * Home destination.
+ *
+ * Owns the Home state and callbacks for now.
+ *
+ * TODO: replace the sample state and no-op callbacks with WeatherViewModel.
+ */
 @Composable
 fun HomeScreen(
+    onDaySelected: (DailyForecast, String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // TODO: replace with the ViewModel StateFlow.
+    val state: WeatherUiState = WeatherSampleData.success
+    val callbacks = HomeCallbacks()
+
+    LaunchedEffect(Unit) {
+        // Only request initial data while loading, so returning from Detail
+        // (state = Success) does not trigger another fetch.
+        if (state is WeatherUiState.Loading) {
+            callbacks.onScreenStarted()
+        }
+    }
+
+    val locationName = (state as? WeatherUiState.Success)?.current?.locationName.orEmpty()
+
+    HomeContent(
+        state = state,
+        callbacks = callbacks,
+        onDayClick = { forecast -> onDaySelected(forecast, locationName) },
+        modifier = modifier,
+    )
+}
+
+/**
+ * Stateless Home UI. Kept private so previews can render each state.
+ */
+@Composable
+private fun HomeContent(
     state: WeatherUiState,
-    onRefresh: () -> Unit,
-    onRetry: () -> Unit,
+    callbacks: HomeCallbacks,
     onDayClick: (DailyForecast) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,16 +114,16 @@ fun HomeScreen(
         label = "weather-state",
     ) { uiState ->
         when (uiState) {
-            WeatherUiState.Loading -> WeatherLoadingContent()
-            is WeatherUiState.Error -> WeatherErrorContent(
+            WeatherUiState.Loading -> HomeLoadingContent()
+            is WeatherUiState.Error -> HomeErrorContent(
                 error = uiState,
-                onRetry = onRetry,
+                onRetry = callbacks.onRetry,
             )
 
-            is WeatherUiState.Success -> WeatherHomeContent(
+            is WeatherUiState.Success -> HomeSuccessContent(
                 current = uiState.current,
                 forecast = uiState.forecast,
-                onRefresh = onRefresh,
+                onRefresh = callbacks.onRefresh,
                 onDayClick = onDayClick,
             )
         }
@@ -75,7 +131,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun WeatherHomeContent(
+private fun HomeSuccessContent(
     current: CurrentWeather,
     forecast: List<DailyForecast>,
     onRefresh: () -> Unit,
@@ -111,7 +167,7 @@ private fun WeatherHomeContent(
             label = stringResource(R.string.visibility),
             value = stringResource(
                 R.string.visibility_format,
-                formatDecimal(current.visibilityKm),
+                current.visibilityKm.formatDecimal()
             ),
         ),
     )
@@ -167,10 +223,9 @@ private fun WeatherHomeContent(
 @Composable
 private fun HomeSuccessPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        HomeScreen(
+        HomeContent(
             state = WeatherSampleData.success,
-            onRefresh = {},
-            onRetry = {},
+            callbacks = HomeCallbacks(),
             onDayClick = {},
         )
     }
@@ -180,10 +235,9 @@ private fun HomeSuccessPreview() {
 @Composable
 private fun HomeLoadingPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        HomeScreen(
+        HomeContent(
             state = WeatherSampleData.loading,
-            onRefresh = {},
-            onRetry = {},
+            callbacks = HomeCallbacks(),
             onDayClick = {},
         )
     }
@@ -193,10 +247,9 @@ private fun HomeLoadingPreview() {
 @Composable
 private fun HomeLocationErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        HomeScreen(
+        HomeContent(
             state = WeatherSampleData.locationError,
-            onRefresh = {},
-            onRetry = {},
+            callbacks = HomeCallbacks(),
             onDayClick = {},
         )
     }
@@ -206,10 +259,9 @@ private fun HomeLocationErrorPreview() {
 @Composable
 private fun HomeNetworkErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        HomeScreen(
+        HomeContent(
             state = WeatherSampleData.networkError,
-            onRefresh = {},
-            onRetry = {},
+            callbacks = HomeCallbacks(),
             onDayClick = {},
         )
     }

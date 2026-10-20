@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation.components
+package com.medioka.guideline.app.presentation.common.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,7 +31,7 @@ import com.medioka.guideline.app.presentation.LoadingBackdrop
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable
-fun WeatherLoadingContent(modifier: Modifier = Modifier) {
+fun HomeLoadingContent(modifier: Modifier = Modifier) {
     WeatherBackground(backdrop = LoadingBackdrop, modifier = modifier) {
         Column(
             modifier = Modifier
@@ -148,8 +148,8 @@ fun WeatherLoadingContent(modifier: Modifier = Modifier) {
 
 @Preview(name = "Loading content", showBackground = true, widthDp = 412, heightDp = 915)
 @Composable
-private fun WeatherLoadingContentPreview() {
+private fun HomeLoadingContentPreview() {
     GuidelineAppTheme(darkTheme = true) {
-        WeatherLoadingContent()
+        HomeLoadingContent()
     }
 }

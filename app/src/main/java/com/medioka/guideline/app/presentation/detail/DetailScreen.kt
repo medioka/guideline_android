@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation
+package com.medioka.guideline.app.presentation.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,17 +27,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medioka.guideline.app.R
-import com.medioka.guideline.app.presentation.components.ScreenFooter
-import com.medioka.guideline.app.presentation.components.SectionHeader
-import com.medioka.guideline.app.presentation.components.WeatherBackground
-import com.medioka.guideline.app.presentation.components.WeatherDetail
-import com.medioka.guideline.app.presentation.components.WeatherDetailsGrid
-import com.medioka.guideline.app.presentation.components.WeatherGlyph
+import com.medioka.guideline.app.presentation.common.previews.WeatherSampleData
+import com.medioka.guideline.app.presentation.common.components.ScreenFooter
+import com.medioka.guideline.app.presentation.common.components.SectionHeader
+import com.medioka.guideline.app.presentation.common.components.WeatherBackground
+import com.medioka.guideline.app.presentation.common.components.WeatherDetail
+import com.medioka.guideline.app.presentation.common.components.WeatherDetailsGrid
+import com.medioka.guideline.app.presentation.common.components.WeatherGlyph
+import com.medioka.guideline.app.presentation.common.model.DailyForecast
 import com.medioka.guideline.app.presentation.detail.components.DetailTopBar
 import com.medioka.guideline.app.presentation.detail.components.HourlyCard
 import com.medioka.guideline.app.presentation.detail.components.SunTimesCard
 import com.medioka.guideline.app.presentation.detail.components.TemperatureRangeBar
-import com.medioka.guideline.app.presentation.model.DailyForecast
+import com.medioka.guideline.app.presentation.common.extension.formatDecimal
+import com.medioka.guideline.app.presentation.weatherBackdrop
+import com.medioka.guideline.app.presentation.weatherConditionLabel
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable
@@ -68,7 +72,7 @@ fun DetailScreen(
             label = stringResource(R.string.precipitation),
             value = stringResource(
                 R.string.precipitation_format,
-                formatDecimal(day.precipitationMm, decimals = 1),
+                day.precipitationMm.formatDecimal()
             ),
         ),
         WeatherDetail(

@@ -1,11 +1,11 @@
-package com.medioka.guideline.app.presentation
+package com.medioka.guideline.app.presentation.common.previews
 
-import com.medioka.guideline.app.presentation.model.CurrentWeather
-import com.medioka.guideline.app.presentation.model.DailyForecast
-import com.medioka.guideline.app.presentation.model.HourlyForecast
-import com.medioka.guideline.app.presentation.model.WeatherCondition
-import com.medioka.guideline.app.presentation.model.WeatherErrorReason
-import com.medioka.guideline.app.presentation.model.WeatherUiState
+import com.medioka.guideline.app.presentation.common.model.CurrentWeather
+import com.medioka.guideline.app.presentation.common.model.DailyForecast
+import com.medioka.guideline.app.presentation.common.model.HourlyForecast
+import com.medioka.guideline.app.presentation.common.model.WeatherCondition
+import com.medioka.guideline.app.presentation.common.model.WeatherErrorReason
+import com.medioka.guideline.app.presentation.common.model.WeatherUiState
 
 /**
  * Placeholder content for previews and for the first UI-only run.

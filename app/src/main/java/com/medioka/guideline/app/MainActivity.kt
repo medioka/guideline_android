@@ -6,7 +6,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.medioka.guideline.app.presentation.WeatherApp
-import com.medioka.guideline.app.presentation.WeatherSampleData
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,13 +17,7 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             GuidelineAppTheme {
-                WeatherApp(
-                    // TODO: replace the sample state with the real data source.
-                    state = WeatherSampleData.success,
-                    onRefresh = {},
-                    onRetry = {},
-                    onDaySelected = {},
-                )
+                WeatherApp()
             }
         }
     }

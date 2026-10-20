@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation.model
+package com.medioka.guideline.app.presentation.common.model
 
 /**
  * Minimal, UI-facing representation of the Open-Meteo weather codes.

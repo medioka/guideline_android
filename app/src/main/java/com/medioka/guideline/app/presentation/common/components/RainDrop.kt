@@ -1,4 +1,4 @@
-package com.medioka.guideline.app.presentation.components
+package com.medioka.guideline.app.presentation.common.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
