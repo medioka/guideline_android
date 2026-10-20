@@ -1,0 +1,46 @@
+{
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "timezone": "America/Los_Angeles",
+  "utc_offset_seconds": -25200,
+  "current": {
+    "time": "2026-10-20T00:00",
+    "temperature_2m": 12.0,
+    "relative_humidity_2m": 80,
+    "apparent_temperature": 11.0,
+    "is_day": 0,
+    "precipitation": 0.0,
+    "weather_code": 2,
+    "pressure_msl": 1010.0,
+    "wind_speed_10m": 14.0,
+    "wind_direction_10m": 270,
+    "visibility": 10000.0
+  },
+  "hourly": {
+    "time": [
+      "2026-10-20T00:00",
+      "2026-10-20T01:00",
+      "2026-10-20T02:00",
+      "2026-10-21T00:00"
+    ],
+    "temperature_2m": [12.0, 11.5, 11.0, 13.0],
+    "relative_humidity_2m": [80, 82, 84, 70],
+    "pressure_msl": [1010.0, 1011.0, 1012.0, 1015.0],
+    "precipitation_probability": [0, 10, 20, 5],
+    "weather_code": [0, 1, 2, 61],
+    "is_day": [0, 0, 1, 1]
+  },
+  "daily": {
+    "time": ["2026-10-20", "2026-10-21"],
+    "weather_code": [2, 61],
+    "temperature_2m_max": [21.0, 17.0],
+    "temperature_2m_min": [13.0, 12.0],
+    "sunrise": ["2026-10-20T07:22", "2026-10-21T07:23"],
+    "sunset": ["2026-10-20T18:31", "2026-10-21T18:30"],
+    "uv_index_max": [4.0, 2.0],
+    "precipitation_sum": [0.0, 6.4],
+    "precipitation_probability_max": [10, 80],
+    "wind_speed_10m_max": [14.0, 22.0],
+    "wind_direction_10m_dominant": [270, 225]
+  }
+}
