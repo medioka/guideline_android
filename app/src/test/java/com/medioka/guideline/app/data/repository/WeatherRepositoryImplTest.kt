@@ -26,12 +26,11 @@ class WeatherRepositoryImplTest {
         val repository = WeatherRepositoryImpl(api)
         val payload = WeatherPayload(latitude = 37.7749, longitude = -122.4194)
 
-        val result = repository.getWeather(payload)
+        val weather = repository.getWeather(payload)
 
-        assertTrue(result.isSuccess)
-        assertEquals(payload.latitude, result.getOrNull()?.location?.latitude ?: 0.0, 0.001)
-        assertEquals(payload.longitude, result.getOrNull()?.location?.longitude ?: 0.0, 0.001)
-        assertEquals(2, result.getOrNull()?.daily?.size)
+        assertEquals(payload.latitude, weather.location.latitude, 0.001)
+        assertEquals(payload.longitude, weather.location.longitude, 0.001)
+        assertEquals(2, weather.daily.size)
         assertEquals(payload.latitude, api.requestedLatitude ?: 0.0, 0.001)
         assertEquals(payload.longitude, api.requestedLongitude ?: 0.0, 0.001)
     }
@@ -42,7 +41,7 @@ class WeatherRepositoryImplTest {
             FakeWeatherApi(error = IOException("offline")),
         )
 
-        val result = repository.getWeather(WeatherPayload())
+        val result = runCatching { repository.getWeather(WeatherPayload()) }
 
         assertTrue(result.exceptionOrNull() is WeatherException.Network)
     }
@@ -57,7 +56,7 @@ class WeatherRepositoryImplTest {
         )
         val repository = WeatherRepositoryImpl(FakeWeatherApi(error = httpError))
 
-        val result = repository.getWeather(WeatherPayload())
+        val result = runCatching { repository.getWeather(WeatherPayload()) }
 
         val error = result.exceptionOrNull()
         assertTrue(error is WeatherException.Http)

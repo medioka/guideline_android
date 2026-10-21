@@ -25,6 +25,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,20 +37,20 @@ import androidx.compose.ui.unit.dp
 import com.medioka.guideline.app.R
 import com.medioka.guideline.app.presentation.ErrorBackdrop
 import com.medioka.guideline.app.presentation.common.model.WeatherErrorReason
-import com.medioka.guideline.app.presentation.common.model.WeatherUiState
 import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable
 fun HomeErrorContent(
-    error: WeatherUiState.Error,
+    error: WeatherErrorReason,
     onRetry: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val title = when (error.reason) {
+    val title = when (error) {
         WeatherErrorReason.LOCATION -> stringResource(R.string.error_location_title)
         WeatherErrorReason.NETWORK -> stringResource(R.string.error_network_title)
     }
-    val message = when (error.reason) {
+    val message = when (error) {
         WeatherErrorReason.LOCATION -> stringResource(R.string.error_location_message)
         WeatherErrorReason.NETWORK -> stringResource(R.string.error_network_message)
     }
@@ -72,7 +73,7 @@ fun HomeErrorContent(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = when (error.reason) {
+                    imageVector = when (error) {
                         WeatherErrorReason.LOCATION -> Icons.Filled.LocationOn
                         WeatherErrorReason.NETWORK -> Icons.Filled.Warning
                     },
@@ -119,6 +120,16 @@ fun HomeErrorContent(
                 )
             }
             Spacer(modifier = Modifier.height(18.dp))
+            if (error == WeatherErrorReason.LOCATION) {
+                TextButton(onClick = onOpenSettings) {
+                    Text(
+                        text = stringResource(R.string.open_settings),
+                        color = Color.White.copy(alpha = 0.86f),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+            }
             Text(
                 text = stringResource(R.string.powered_by),
                 style = MaterialTheme.typography.labelSmall,
@@ -133,7 +144,7 @@ fun HomeErrorContent(
 private fun HomeLocationErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
         HomeErrorContent(
-            error = WeatherUiState.Error(WeatherErrorReason.LOCATION),
+            error = WeatherErrorReason.LOCATION,
             onRetry = {},
         )
     }
@@ -144,7 +155,7 @@ private fun HomeLocationErrorPreview() {
 private fun HomeNetworkErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
         HomeErrorContent(
-            error = WeatherUiState.Error(WeatherErrorReason.NETWORK),
+            error = WeatherErrorReason.NETWORK,
             onRetry = {},
         )
     }

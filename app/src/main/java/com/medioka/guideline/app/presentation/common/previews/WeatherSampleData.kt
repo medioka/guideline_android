@@ -4,8 +4,6 @@ import com.medioka.guideline.app.presentation.common.model.CurrentWeather
 import com.medioka.guideline.app.presentation.common.model.DailyForecast
 import com.medioka.guideline.app.presentation.common.model.HourlyForecast
 import com.medioka.guideline.app.presentation.common.model.WeatherCondition
-import com.medioka.guideline.app.presentation.common.model.WeatherErrorReason
-import com.medioka.guideline.app.presentation.common.model.WeatherUiState
 
 /**
  * Placeholder content for previews and for the first UI-only run.
@@ -182,17 +180,6 @@ object WeatherSampleData {
             ),
         ),
     )
-
-    val success: WeatherUiState.Success = WeatherUiState.Success(
-        current = current,
-        forecast = forecast,
-    )
-
-    val loading: WeatherUiState = WeatherUiState.Loading
-
-    val locationError: WeatherUiState = WeatherUiState.Error(WeatherErrorReason.LOCATION)
-
-    val networkError: WeatherUiState = WeatherUiState.Error(WeatherErrorReason.NETWORK)
 }
 
 private fun hourly(

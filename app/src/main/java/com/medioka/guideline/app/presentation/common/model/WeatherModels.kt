@@ -1,5 +1,6 @@
 package com.medioka.guideline.app.presentation.common.model
 
+import androidx.compose.runtime.Stable
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,6 +19,7 @@ enum class WeatherCondition {
     THUNDERSTORM,
 }
 
+@Stable
 data class CurrentWeather(
     val locationName: String,
     val condition: WeatherCondition,

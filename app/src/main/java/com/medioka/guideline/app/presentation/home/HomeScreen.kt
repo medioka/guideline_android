@@ -1,5 +1,14 @@
 package com.medioka.guideline.app.presentation.home
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -11,6 +20,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -19,21 +29,21 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medioka.guideline.app.R
 import com.medioka.guideline.app.presentation.common.components.HomeErrorContent
 import com.medioka.guideline.app.presentation.common.components.HomeLoadingContent
@@ -43,66 +53,80 @@ import com.medioka.guideline.app.presentation.common.components.WeatherBackgroun
 import com.medioka.guideline.app.presentation.common.components.WeatherDetail
 import com.medioka.guideline.app.presentation.common.components.WeatherDetailsGrid
 import com.medioka.guideline.app.presentation.common.extension.formatDecimal
-import com.medioka.guideline.app.presentation.common.location.LocationResult
+import com.medioka.guideline.app.presentation.common.location.hasLocationPermission
 import com.medioka.guideline.app.presentation.common.model.CurrentWeather
 import com.medioka.guideline.app.presentation.common.model.DailyForecast
 import com.medioka.guideline.app.presentation.common.model.WeatherErrorReason
-import com.medioka.guideline.app.presentation.common.model.WeatherUiState
 import com.medioka.guideline.app.presentation.common.previews.WeatherSampleData
 import com.medioka.guideline.app.presentation.home.components.CurrentWeatherHero
 import com.medioka.guideline.app.presentation.home.components.ForecastCard
 import com.medioka.guideline.app.presentation.home.components.LocationBar
 import com.medioka.guideline.app.presentation.weatherBackdrop
 import com.medioka.guideline.app.theme.GuidelineAppTheme
+import org.koin.compose.viewmodel.koinViewModel
 
-/**
- * UI callbacks consumed by the Home screen.
- *
- * Android permission and location APIs stay outside this contract. The caller
- * translates their outcome into [LocationResult] and calls [onLocationResult].
- */
-data class HomeCallbacks(
-    val onScreenStarted: () -> Unit = {},
-    val onGetLocation: () -> Unit = {},
-    val onRefresh: () -> Unit = {},
-    val onRetry: () -> Unit = {},
-    val onLocationResult: (LocationResult) -> Unit = {},
-    val onDismissError: () -> Unit = {},
-    val onOpenSettings: () -> Unit = {},
-    val isRefreshing: Boolean = false,
-)
-
-/**
- * Home destination.
- *
- * Owns the Home state and callbacks for now.
- *
- * TODO: replace the sample state and no-op callbacks with WeatherViewModel.
- */
+/** Home MVI destination: renders state, dispatches intents, and handles effects. */
 @Composable
 fun HomeScreen(
-    onNavigateToWeatherDay: (DailyForecast, String) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = koinViewModel(),
+    onNavigateToWeatherDay: (DailyForecast, String) -> Unit,
 ) {
-    // TODO: replace with the ViewModel StateFlow.
-    val state: WeatherUiState = WeatherSampleData.success
-    val callbacks = HomeCallbacks()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val activity = LocalActivity.current ?: error("LocalActivity is required")
+    val snackbarHostState = remember { SnackbarHostState() }
+    val locationRefreshError = stringResource(R.string.refresh_error_location)
+    val networkRefreshError = stringResource(R.string.refresh_error_network)
 
-    LaunchedEffect(Unit) {
-        // Only request initial data while loading, so returning from Detail
-        // (state = Success) does not trigger another fetch.
-        if (state is WeatherUiState.Loading) {
-            callbacks.onScreenStarted()
+    val permissionLauncher: ActivityResultLauncher<String> = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        viewModel.onIntent(
+            if (granted || activity.hasLocationPermission()) {
+                HomeIntent.LocationPermissionGranted
+            } else {
+                HomeIntent.LocationPermissionDenied
+            }
+        )
+    }
+
+    LaunchedEffect(viewModel, locationRefreshError, networkRefreshError) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                HomeEffect.RequestLocationPermission -> {
+                    if (activity.hasLocationPermission()) {
+                        viewModel.onIntent(HomeIntent.LocationPermissionGranted)
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                }
+
+                HomeEffect.OpenAppSettings -> context.openAppSettings()
+                is HomeEffect.NavigateToWeatherDay -> onNavigateToWeatherDay(
+                    effect.forecast,
+                    effect.locationName,
+                )
+                is HomeEffect.ShowRefreshError -> {
+                    val message = when (effect.reason) {
+                        WeatherErrorReason.LOCATION -> locationRefreshError
+                        WeatherErrorReason.NETWORK -> networkRefreshError
+                    }
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
         }
     }
 
-    val locationName = (state as? WeatherUiState.Success)?.current?.locationName.orEmpty()
+    LaunchedEffect(viewModel) {
+        viewModel.onIntent(HomeIntent.ScreenStarted)
+    }
 
     HomeContent(
-        state = state,
-        callbacks = callbacks,
-        onDayClick = { forecast -> onNavigateToWeatherDay(forecast, locationName) },
         modifier = modifier,
+        state = state,
+        onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -111,56 +135,44 @@ fun HomeScreen(
  */
 @Composable
 private fun HomeContent(
-    state: WeatherUiState,
-    callbacks: HomeCallbacks,
-    onDayClick: (DailyForecast) -> Unit,
     modifier: Modifier = Modifier,
+    state: HomeState,
+    onIntent: (HomeIntent) -> Unit,
+    snackbarHostState: SnackbarHostState,
 ) {
-    var lastSuccess by remember { mutableStateOf<WeatherUiState.Success?>(null) }
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state) {
-        if (state is WeatherUiState.Success) lastSuccess = state
-    }
-
-    val refreshError = (state as? WeatherUiState.Error).takeIf { lastSuccess != null }
-    val refreshErrorMessage = when (refreshError?.reason) {
-        WeatherErrorReason.LOCATION -> stringResource(R.string.refresh_error_location)
-        WeatherErrorReason.NETWORK -> stringResource(R.string.refresh_error_network)
-        null -> null
-    }
-    LaunchedEffect(refreshErrorMessage) {
-        refreshErrorMessage?.let { snackbarHostState.showSnackbar(it) }
-    }
-
-    val keepCachedContent = lastSuccess != null &&
-        (refreshError != null || (state is WeatherUiState.Loading && callbacks.isRefreshing))
-    val displayedState = if (keepCachedContent) lastSuccess!! else state
-
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedContent(
-            targetState = displayedState,
+            targetState = state,
             modifier = Modifier.fillMaxSize(),
             transitionSpec = {
                 fadeIn(animationSpec = tween(420)) togetherWith fadeOut(animationSpec = tween(200))
             },
-            contentKey = { it::class },
+            contentKey = {
+                when {
+                    it.error != null -> "error"
+                    it.currentWeather != null -> "success"
+                    else -> "loading"
+                }
+            },
             label = "weather-state",
-        ) { uiState ->
-            when (uiState) {
-                WeatherUiState.Loading -> HomeLoadingContent()
-                is WeatherUiState.Error -> HomeErrorContent(
-                    error = uiState,
-                    onRetry = callbacks.onRetry,
+        ) { homeState ->
+            when {
+                homeState.error != null -> HomeErrorContent(
+                    error = homeState.error,
+                    onRetry = { onIntent(HomeIntent.Retry) },
+                    onOpenSettings = { onIntent(HomeIntent.OpenSettings) },
                 )
 
-                is WeatherUiState.Success -> HomeSuccessContent(
-                    current = uiState.current,
-                    forecast = uiState.forecast,
-                    isRefreshing = callbacks.isRefreshing && refreshError == null,
-                    onRefresh = callbacks.onRefresh,
-                    onDayClick = onDayClick,
-                )
+                homeState.currentWeather != null -> {
+                    HomeSuccessContent(
+                        current = homeState.currentWeather,
+                        forecast = homeState.forecast,
+                        isRefreshing = homeState.isRefreshing,
+                        onIntent = onIntent,
+                    )
+                }
+
+                else -> HomeLoadingContent()
             }
         }
 
@@ -174,13 +186,11 @@ private fun HomeContent(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun HomeSuccessContent(
     current: CurrentWeather,
     forecast: List<DailyForecast>,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit,
-    onDayClick: (DailyForecast) -> Unit,
+    onIntent: (HomeIntent) -> Unit,
 ) {
     val backdrop = weatherBackdrop(condition = current.condition, isDay = current.isDay)
     val details = listOf(
@@ -220,7 +230,7 @@ private fun HomeSuccessContent(
     WeatherBackground(backdrop = backdrop) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = onRefresh,
+            onRefresh = { onIntent.invoke(HomeIntent.Refresh) },
             modifier = Modifier.fillMaxSize(),
         ) {
             Column(
@@ -230,6 +240,9 @@ private fun HomeSuccessContent(
                     .statusBarsPadding()
                     .navigationBarsPadding(),
             ) {
+                if (isRefreshing) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
                 LocationBar(current = current)
 
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -258,7 +271,7 @@ private fun HomeSuccessContent(
                         ForecastCard(
                             day = day,
                             highlighted = index == 0,
-                            onClick = { onDayClick(day) },
+                            onClick = { onIntent(HomeIntent.ForecastSelected(day)) },
                         )
                     }
                 }
@@ -275,9 +288,13 @@ private fun HomeSuccessContent(
 private fun HomeSuccessPreview() {
     GuidelineAppTheme(darkTheme = true) {
         HomeContent(
-            state = WeatherSampleData.success,
-            callbacks = HomeCallbacks(),
-            onDayClick = {},
+            state = HomeState(
+                isLoading = false,
+                currentWeather = WeatherSampleData.current,
+                forecast = WeatherSampleData.forecast,
+            ),
+            onIntent = {},
+            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -287,9 +304,9 @@ private fun HomeSuccessPreview() {
 private fun HomeLoadingPreview() {
     GuidelineAppTheme(darkTheme = true) {
         HomeContent(
-            state = WeatherSampleData.loading,
-            callbacks = HomeCallbacks(),
-            onDayClick = {},
+            state = HomeState(),
+            onIntent = {},
+            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -299,9 +316,12 @@ private fun HomeLoadingPreview() {
 private fun HomeLocationErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
         HomeContent(
-            state = WeatherSampleData.locationError,
-            callbacks = HomeCallbacks(),
-            onDayClick = {},
+            state = HomeState(
+                isLoading = false,
+                error = WeatherErrorReason.LOCATION,
+            ),
+            onIntent = {},
+            snackbarHostState = SnackbarHostState(),
         )
     }
 }
@@ -311,9 +331,20 @@ private fun HomeLocationErrorPreview() {
 private fun HomeNetworkErrorPreview() {
     GuidelineAppTheme(darkTheme = true) {
         HomeContent(
-            state = WeatherSampleData.networkError,
-            callbacks = HomeCallbacks(),
-            onDayClick = {},
+            state = HomeState(
+                isLoading = false,
+                error = WeatherErrorReason.NETWORK,
+            ),
+            onIntent = {},
+            snackbarHostState = SnackbarHostState(),
         )
     }
+}
+
+private fun Context.openAppSettings() {
+    val intent = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", packageName, null),
+    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    startActivity(intent)
 }
