@@ -1,3 +1,22 @@
+## Clean Architecture dependency direction
+
+Dependencies point inward toward the domain. Presentation and data may depend on domain contracts; domain should not depend on either outer layer.
+
+```text
+Presentation ───────► Domain ◄─────── Data
+ Compose, ViewModels   Models, use cases,   Retrofit, DTOs,
+                      repository interfaces repository implementations
+```
+
+For example, the use case calls the domain repository interface. The data repository implements that interface and is provided through dependency injection:
+
+```text
+HomeViewModel → GetWeatherUseCase → WeatherRepository (domain interface)
+                                             ▲
+                                             │ implements
+                                    WeatherRepositoryImpl (data)
+```
+
 ## 1. Project structure
 
 The app follows a layered structure. These layer names are common in Android and Clean Architecture projects, but Android does not require these exact folders. Choose the structure that fits the size and needs of an app.
