@@ -21,8 +21,7 @@ class GetWeatherUseCaseTest {
 
         val result = useCase(payload)
 
-        assertTrue(result.isSuccess)
-        assertEquals(expected, result.getOrNull())
+        assertEquals(expected, result)
         assertEquals(payload, repository.requestedPayload)
     }
 
@@ -31,7 +30,9 @@ class GetWeatherUseCaseTest {
         val repository = FakeWeatherRepository(Result.success(testWeather()))
         val useCase = GetWeatherUseCase(repository)
 
-        val result = useCase(WeatherPayload(latitude = 91.0, longitude = -122.4194))
+        val result = runCatching {
+            useCase(WeatherPayload(latitude = 91.0, longitude = -122.4194))
+        }
 
         assertTrue(result.exceptionOrNull() is WeatherException.InvalidLocation)
         assertEquals(null, repository.requestedPayload)
@@ -42,10 +43,25 @@ class GetWeatherUseCaseTest {
         val repository = FakeWeatherRepository(Result.success(testWeather()))
         val useCase = GetWeatherUseCase(repository)
 
-        val result = useCase(WeatherPayload(latitude = 37.7749, longitude = -181.0))
+        val result = runCatching {
+            useCase(WeatherPayload(latitude = 37.7749, longitude = -181.0))
+        }
 
         assertTrue(result.exceptionOrNull() is WeatherException.InvalidLocation)
         assertEquals(null, repository.requestedPayload)
+    }
+
+    @Test
+    fun `propagates repository failures`() = runTest {
+        val failure = WeatherException.Network(IllegalStateException("offline"))
+        val repository = FakeWeatherRepository(Result.failure(failure))
+        val useCase = GetWeatherUseCase(repository)
+
+        val result = runCatching {
+            useCase(WeatherPayload(latitude = 37.7749, longitude = -122.4194))
+        }
+
+        assertEquals(failure, result.exceptionOrNull())
     }
 
     private class FakeWeatherRepository(
@@ -54,9 +70,9 @@ class GetWeatherUseCaseTest {
         var requestedPayload: WeatherPayload? = null
             private set
 
-        override suspend fun getWeather(payload: WeatherPayload): Result<Weather> {
+        override suspend fun getWeather(payload: WeatherPayload): Weather {
             requestedPayload = payload
-            return result
+            return result.getOrThrow()
         }
     }
 }

@@ -9,7 +9,7 @@ sealed interface WeatherUiState {
     ) : WeatherUiState
 
     data class Error(
-        val reason: WeatherErrorReason,
+        val reason: WeatherErrorReason
     ) : WeatherUiState
 }
 

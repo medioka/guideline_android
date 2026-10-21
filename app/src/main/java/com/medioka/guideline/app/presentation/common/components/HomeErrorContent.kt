@@ -25,6 +25,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,9 +42,10 @@ import com.medioka.guideline.app.theme.GuidelineAppTheme
 
 @Composable
 fun HomeErrorContent(
+    modifier: Modifier = Modifier,
     error: WeatherUiState.Error,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {}
 ) {
     val title = when (error.reason) {
         WeatherErrorReason.LOCATION -> stringResource(R.string.error_location_title)
@@ -119,6 +121,16 @@ fun HomeErrorContent(
                 )
             }
             Spacer(modifier = Modifier.height(18.dp))
+            if (error.reason == WeatherErrorReason.LOCATION) {
+                TextButton(onClick = onOpenSettings) {
+                    Text(
+                        text = stringResource(R.string.open_settings),
+                        color = Color.White.copy(alpha = 0.86f),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+            }
             Text(
                 text = stringResource(R.string.powered_by),
                 style = MaterialTheme.typography.labelSmall,

@@ -51,6 +51,7 @@
     <string name="error_network_message">The weather service didn\'t respond. Check your internet connection and try again.</string>
     <string name="refresh_error_location">Couldn\'t update your location. Showing the last available forecast.</string>
     <string name="refresh_error_network">Couldn\'t refresh weather. Showing the last available forecast.</string>
+    <string name="open_settings">Open app settings</string>
 
     <!-- Conditions -->
     <string name="condition_sunny">Sunny</string>
